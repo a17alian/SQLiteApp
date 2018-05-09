@@ -33,11 +33,11 @@ public class Mountain {
 
     // Metoder
 
-
     @Override
     public String toString() {
         return name;
     }
+
 
     public String info(){
         String str = name;

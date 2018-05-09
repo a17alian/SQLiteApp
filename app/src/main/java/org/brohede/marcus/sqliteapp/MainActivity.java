@@ -37,6 +37,8 @@ public class MainActivity extends AppCompatActivity {
     private ArrayAdapter adapter;
     private List<Mountain> listData = new ArrayList<>();
     MountainReaderDbHelper alice;
+    boolean isName = false;
+    boolean isHeight = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,44 +65,7 @@ public class MainActivity extends AppCompatActivity {
         };
     }
 
-    public void fetchDb(){
-        adapter.clear();
-        SQLiteDatabase dbRead = alice.getReadableDatabase();
-        String[] projection = {
-                MountainReaderContract.MountainEntry.COLUMN_NAME_NAME,
-                MountainReaderContract.MountainEntry.COLUMN_NAME_LOCATION,
-                MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGHT
-    };
-
-
-    // String selection = FeedEntry.COLUMN_NAME_TITLE + " = ?";
-    //String[] selectionArgs = { "My Title" };
-    String sortOrder =
-            MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGHT + " ASC";
-
-    Cursor cursor = dbRead.query(
-            MountainReaderContract.MountainEntry.TABLE_NAME,   // The table to query
-            projection,             // The array of columns to return (pass null to get all)
-            null,              // The columns for the WHERE clause
-            null,          // The values for the WHERE clause
-            null,                   // don't group the rows
-            null,                   // don't filter by row groups
-            sortOrder               // The sort order
-    );
-        while(cursor.moveToNext()) {
-              String mName = cursor.getString(cursor.getColumnIndexOrThrow(MountainReaderContract.MountainEntry.COLUMN_NAME_NAME));
-            String mLocation = cursor.getString(cursor.getColumnIndexOrThrow(MountainReaderContract.MountainEntry.COLUMN_NAME_LOCATION));
-            int mHeight = cursor.getInt(cursor.getColumnIndexOrThrow(MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGHT));
-
-            Mountain m = new Mountain(mName, mLocation, mHeight);
-            adapter.add(m);
-
-        }
-        cursor.close();
-
-}
-
-    public void fetchDb2(){
+    public void fetchDb() {
         adapter.clear();
         SQLiteDatabase dbRead = alice.getReadableDatabase();
         String[] projection = {
@@ -108,10 +73,14 @@ public class MainActivity extends AppCompatActivity {
                 MountainReaderContract.MountainEntry.COLUMN_NAME_LOCATION,
                 MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGHT
         };
-        // String selection = FeedEntry.COLUMN_NAME_TITLE + " = ?";
-        //String[] selectionArgs = { "My Title" };
+
         String sortOrder =
-                MountainReaderContract.MountainEntry.COLUMN_NAME_NAME + " ASC";
+                MountainReaderContract.MountainEntry.COLUMN_NAME_NAME + " DESC ";
+        if(isHeight){
+            sortOrder = MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGHT + " DESC ";
+        } else if(isName){
+                sortOrder = MountainReaderContract.MountainEntry.COLUMN_NAME_NAME + " ASC ";
+        }
 
         Cursor cursor = dbRead.query(
                 MountainReaderContract.MountainEntry.TABLE_NAME,   // The table to query
@@ -122,17 +91,16 @@ public class MainActivity extends AppCompatActivity {
                 null,                   // don't filter by row groups
                 sortOrder               // The sort order
         );
-        while(cursor.moveToNext()) {
+        while (cursor.moveToNext()) {
             String mName = cursor.getString(cursor.getColumnIndexOrThrow(MountainReaderContract.MountainEntry.COLUMN_NAME_NAME));
             String mLocation = cursor.getString(cursor.getColumnIndexOrThrow(MountainReaderContract.MountainEntry.COLUMN_NAME_LOCATION));
             int mHeight = cursor.getInt(cursor.getColumnIndexOrThrow(MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGHT));
 
-            Mountain m = new Mountain(mName, mLocation, mHeight);
-            adapter.add(m);
+            Mountain mberg = new Mountain(mName, mLocation, mHeight);
+            adapter.add(mberg);
 
         }
         cursor.close();
-
     }
 
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -146,12 +114,13 @@ public class MainActivity extends AppCompatActivity {
 
         switch (item.getItemId()) {
             case R.id.byName:
-                //Toast.makeText(getApplicationContext(), "This is an app about mountains" + '\n' + "Created by Alice Anglesjö", Toast.LENGTH_SHORT).show();
-                fetchDb2();
+                isName = true;
+                isHeight = false;
+                fetchDb();
                 return true;
             case R.id.byHeight:
-                //adapter.clear();
-                //new FetchData().execute();
+                isName = false;
+                isHeight = true;
                 fetchDb();
                 return true;
             default:
