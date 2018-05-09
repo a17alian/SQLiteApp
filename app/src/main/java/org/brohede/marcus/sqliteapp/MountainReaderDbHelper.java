@@ -21,7 +21,9 @@ public abstract class MountainReaderDbHelper extends SQLiteOpenHelper {
     }
 
     @Override
-    public void onUpgrade(SQLiteDatabase sqLiteDatabase, int oldVersion, int newVersion) {
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL(MountainReaderContract.SQL_DELETE_ENTRIES);
+        onCreate(db);
 
     }
 }

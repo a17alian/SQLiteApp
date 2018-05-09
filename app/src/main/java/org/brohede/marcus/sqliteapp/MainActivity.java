@@ -1,9 +1,17 @@
 package org.brohede.marcus.sqliteapp;
 
+import android.content.ContentValues;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
+import android.provider.BaseColumns;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -28,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ArrayAdapter adapter;
     private List<Mountain> listData = new ArrayList<>();
+    MountainReaderDbHelper alice;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +57,106 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         myListView.setAdapter(adapter);
+
+        // DATABASE
+        alice = new MountainReaderDbHelper(getApplicationContext()) {
+        };
+    }
+
+    public void fetchDb(){
+        adapter.clear();
+        SQLiteDatabase dbRead = alice.getReadableDatabase();
+        String[] projection = {
+                MountainReaderContract.MountainEntry.COLUMN_NAME_NAME,
+                MountainReaderContract.MountainEntry.COLUMN_NAME_LOCATION,
+                MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGHT
+    };
+
+
+    // String selection = FeedEntry.COLUMN_NAME_TITLE + " = ?";
+    //String[] selectionArgs = { "My Title" };
+    String sortOrder =
+            MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGHT + " ASC";
+
+    Cursor cursor = dbRead.query(
+            MountainReaderContract.MountainEntry.TABLE_NAME,   // The table to query
+            projection,             // The array of columns to return (pass null to get all)
+            null,              // The columns for the WHERE clause
+            null,          // The values for the WHERE clause
+            null,                   // don't group the rows
+            null,                   // don't filter by row groups
+            sortOrder               // The sort order
+    );
+        while(cursor.moveToNext()) {
+              String mName = cursor.getString(cursor.getColumnIndexOrThrow(MountainReaderContract.MountainEntry.COLUMN_NAME_NAME));
+            String mLocation = cursor.getString(cursor.getColumnIndexOrThrow(MountainReaderContract.MountainEntry.COLUMN_NAME_LOCATION));
+            int mHeight = cursor.getInt(cursor.getColumnIndexOrThrow(MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGHT));
+
+            Mountain m = new Mountain(mName, mLocation, mHeight);
+            adapter.add(m);
+
+        }
+        cursor.close();
+
+}
+
+    public void fetchDb2(){
+        adapter.clear();
+        SQLiteDatabase dbRead = alice.getReadableDatabase();
+        String[] projection = {
+                MountainReaderContract.MountainEntry.COLUMN_NAME_NAME,
+                MountainReaderContract.MountainEntry.COLUMN_NAME_LOCATION,
+                MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGHT
+        };
+        // String selection = FeedEntry.COLUMN_NAME_TITLE + " = ?";
+        //String[] selectionArgs = { "My Title" };
+        String sortOrder =
+                MountainReaderContract.MountainEntry.COLUMN_NAME_NAME + " ASC";
+
+        Cursor cursor = dbRead.query(
+                MountainReaderContract.MountainEntry.TABLE_NAME,   // The table to query
+                projection,             // The array of columns to return (pass null to get all)
+                null,              // The columns for the WHERE clause
+                null,          // The values for the WHERE clause
+                null,                   // don't group the rows
+                null,                   // don't filter by row groups
+                sortOrder               // The sort order
+        );
+        while(cursor.moveToNext()) {
+            String mName = cursor.getString(cursor.getColumnIndexOrThrow(MountainReaderContract.MountainEntry.COLUMN_NAME_NAME));
+            String mLocation = cursor.getString(cursor.getColumnIndexOrThrow(MountainReaderContract.MountainEntry.COLUMN_NAME_LOCATION));
+            int mHeight = cursor.getInt(cursor.getColumnIndexOrThrow(MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGHT));
+
+            Mountain m = new Mountain(mName, mLocation, mHeight);
+            adapter.add(m);
+
+        }
+        cursor.close();
+
+    }
+
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_menu, menu);
+        return true;
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId()) {
+            case R.id.byName:
+                //Toast.makeText(getApplicationContext(), "This is an app about mountains" + '\n' + "Created by Alice Anglesjö", Toast.LENGTH_SHORT).show();
+                fetchDb2();
+                return true;
+            case R.id.byHeight:
+                //adapter.clear();
+                //new FetchData().execute();
+                fetchDb();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
 
     }
 
@@ -117,20 +226,16 @@ public class MainActivity extends AppCompatActivity {
             super.onPostExecute(o);
             //Log.d("alicehej", "data" + o);
 
-            // This code executes after we have received our data. The String object o holds
-            // the un-parsed JSON string or is null if we had an IOException during the fetch.
-
-            // Implement a parsing code that loops through the entire JSON and creates objects
-            // of our newly created Mountain class.
             try {
                 adapter.clear();
                 // Ditt JSON-objekt som Java
                 JSONArray json1 = new JSONArray(o);
+                 SQLiteDatabase dbWrite = alice.getWritableDatabase();
 
                 for(int i = 0; i < json1.length(); i++) {
 
                     JSONObject berg = json1.getJSONObject(i);
-                    Log.d("alicehej", "berg" + berg.toString());
+                    //Log.d("alicehej", "berg" + berg.toString());
 
                     int ID = berg.getInt("ID");
                     String name = berg.getString("name");
@@ -141,12 +246,16 @@ public class MainActivity extends AppCompatActivity {
                     int size = berg.getInt("size");
                     int cost = berg.getInt("cost");
 
-                    Mountain m = new Mountain(name,location,size);
+                    ContentValues values = new ContentValues();
+                    values.put(MountainReaderContract.MountainEntry.COLUMN_NAME_NAME, name);
+                    values.put(MountainReaderContract.MountainEntry.COLUMN_NAME_LOCATION, location);
+                    values.put(MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGHT, size);
 
-                    adapter.add(m);
-
+                    // Insert the new row, returning the primary key value of the new row
+                    //dbWrite.insert(MountainReaderContract.MountainEntry.TABLE_NAME, null, values);
+                    dbWrite.insertWithOnConflict(MountainReaderContract.MountainEntry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_IGNORE);
                 }
-
+                fetchDb();
 
             } catch (JSONException e) {
                 Log.e("brom","E:"+e.getMessage());
@@ -165,7 +274,6 @@ public class MainActivity extends AppCompatActivity {
 
         TODO: The Main Activity must have a ListView that displays the names of all the Mountains
               currently in the local SQLite database.
-
 
         TODO: In the details activity an ImageView should display the img_url
               See: https://developer.android.com/reference/android/widget/ImageView.html

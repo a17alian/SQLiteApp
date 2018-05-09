@@ -10,34 +10,41 @@ public class Mountain {
     // These member variables should be used
     private String name;
     private String location;
-    private int size;
+    private int height;
     private String img_url;
     private String info_url;
 
-    public Mountain (String inName, String inLocation, int inHeight, String inImg_url, String inInfo_url){
+    public Mountain (String inName, String inLocation, int inSize, String inImg_url, String inInfo_url){
         name = inName;
         location = inLocation;
-        size = inHeight;
+        height = inSize;
         img_url = inImg_url;
         info_url = inInfo_url;
 
     }
 
-    public Mountain(String name, String inName, int size){
+    public Mountain(String inName, String inLocation, int inSize){
         this.name = inName;
-        location = "";
-        size = -1;
+        location = inLocation;
+        height = inSize;
     }
 
+
+
     // Metoder
-    public String toString(){ return name;}
+
+
+    @Override
+    public String toString() {
+        return name;
+    }
 
     public String info(){
         String str = name;
         str+= " is located in ";
         str+= location;
         str+= " and has a height of ";
-        str+= Integer.toString(size);
+        str+= Integer.toString(height);
         str+="m. ";
 
         return str;
